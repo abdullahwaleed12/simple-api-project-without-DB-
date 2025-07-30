@@ -1,20 +1,23 @@
 const { validationResult } = require("express-validator");
 const Course = require("../models/course.model");
+const httpStatusText = require("../utils/httpStatusText");
 
 const getAllCourses = async (req, res) => {
-  const courses = await Course.find();
-  res.json(courses);
+  const courses = await Course.find({}, {
+    "__v" : false
+  });
+  res.json({status: httpStatusText.SUCCESS , data: {courses}});
 };
 
 const getCourse = async (req, res) => {
   try {
     const course = await Course.findById(req.params.courseId);
     if (!course) {
-      return res.status(404).json({ msg: "No courses Found!!" });
+      return res.status(404).json({status: httpStatusText.FAIL, data: {course: null}});
     }
-    res.json(course);
+    res.json({status: "success", data: {course}});
   } catch {
-    return res.status(400).json({ msg: "Invalid Object Id" });
+    return res.status(400).json({status: httpStatusText.ERROR , data:  null, msg: "Invalid Object ID" });
   }
 };
 
@@ -22,12 +25,12 @@ const createCourse = async (req, res) => {
   console.log(req.body);
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(400).json(errors.array());
+    return res.status(400).json({status: httpStatusText.FAIL, data: {errors: errors.array()}});
   }
   const newCourse = new Course(req.body);
   await newCourse.save();
 
-  res.status(201).json(newCourse);
+  res.status(201).json({status: httpStatusText.SUCCESS , data: {course: newCourse}});
 };
 
 const updateCourse = async (req, res) => {
@@ -38,15 +41,15 @@ const updateCourse = async (req, res) => {
       { _id: courseId },
       { $set: { ...req.body } }
     );
-    return res.status(200).json(updateCourse);
+    return res.status(200).json({status: httpStatusText.SUCCESS , data: {course: updateCourse}});
   } catch (e) {
-    return res.status(400).json(e);
+    return res.status(400).json({status: httpStatusText.ERROR , msg: e.message });
   }
 };
 
 const deleteCourse = async (req, res) => {
   await Course.deleteOne({_id: req.params.courseId})
-  res.status(200).json({ success: true });
+  res.status(200).json({status: httpStatusText.SUCCESS , data: null});
 };
 
 module.exports = {
