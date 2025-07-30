@@ -14,4 +14,4 @@ router.route("/:courseId")
       .delete(courseController.deleteCourse)
 
 
-module.exports = router
+module.exports = router;
